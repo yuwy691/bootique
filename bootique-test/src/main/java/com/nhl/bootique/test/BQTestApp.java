@@ -1,6 +1,5 @@
 package com.nhl.bootique.test;
 
-import java.util.Objects;
 import java.util.function.Consumer;
 
 import com.nhl.bootique.BQRuntime;
@@ -15,19 +14,33 @@ import com.nhl.bootique.log.DefaultBootLogger;
  * 
  * @since 0.14
  */
-public class BQTestRuntime {
+public class BQTestApp {
 
 	private InMemoryPrintStream stdout;
 	private InMemoryPrintStream stderr;
 	private Consumer<Bootique> configurator;
+	private String[] args;
 
 	private BQRuntime runtime;
 
-	public BQTestRuntime(Consumer<Bootique> configurator, String... args) {
+	public BQTestApp(Consumer<Bootique> configurator, String... args) {
 		this.stdout = new InMemoryPrintStream(System.out);
 		this.stderr = new InMemoryPrintStream(System.err);
 		this.configurator = configurator;
+		this.args = args;
+	}
+
+	public void start() {
 		this.runtime = createRuntime(args);
+	}
+
+	public void stop() {
+		BQRuntime localRuntime = this.runtime;
+		this.runtime = null;
+
+		if (localRuntime != null) {
+			localRuntime.shutdown();
+		}
 	}
 
 	/**
@@ -57,14 +70,9 @@ public class BQTestRuntime {
 	}
 
 	/**
-	 * Executes runtime runner, returning the outcome.
+	 * Executes runtime default command, returning the outcome.
 	 */
 	public CommandOutcome run() {
-		Objects.requireNonNull(runtime);
-		try {
-			return runtime.getRunner().run();
-		} finally {
-			runtime.shutdown();
-		}
+		return runtime.getRunner().run();
 	}
 }
